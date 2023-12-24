@@ -2,6 +2,7 @@ package com.example.subscriptioncontrol // замените на ваш паке
 
 import Subscription
 import SubscriptionAdapter
+import SubscriptionViewModel
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.widget.Button
@@ -9,20 +10,29 @@ import android.widget.EditText
 import android.widget.ListView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.ViewModelProvider
 
 
 class MainActivity : AppCompatActivity() {
 
-    private val subscriptions = mutableListOf<Subscription>()
+    private lateinit var subscriptionViewModel: SubscriptionViewModel
     private lateinit var subscriptionAdapter: SubscriptionAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        this.subscriptionAdapter = SubscriptionAdapter(this, subscriptions)
-        val subscriptionList = findViewById<ListView>(R.id.subscriptionList);
+        subscriptionViewModel = ViewModelProvider(this).get(SubscriptionViewModel::class.java)
+
+        val subscriptionList = findViewById<ListView>(R.id.subscriptionList)
+        subscriptionAdapter = SubscriptionAdapter(this, subscriptionViewModel.subscriptions.value ?: mutableListOf(), subscriptionViewModel)
         subscriptionList.adapter = subscriptionAdapter
+
+        subscriptionViewModel.subscriptions.observe(this, { subscriptions ->
+            subscriptions?.let {
+                subscriptionAdapter.updateList(it)
+            }
+        })
 
         val addSubcription = findViewById<Button>(R.id.addSubcription);
 
@@ -50,9 +60,8 @@ class MainActivity : AppCompatActivity() {
             val number2 = editTextNumber2.text.toString().toInt()
 
             val subscription = Subscription(subscriptionText, number1, number2)
-            subscriptions.add(subscription)
-            subscriptionAdapter.notifyDataSetChanged()
-
+            subscriptionViewModel.subscriptions.value?.add(subscription)
+            subscriptionViewModel.subscriptions.postValue(subscriptionViewModel.subscriptions.value)
             alertDialog.dismiss()
         }
     }

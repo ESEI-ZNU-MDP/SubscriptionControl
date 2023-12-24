@@ -9,7 +9,11 @@ import android.widget.EditText
 import android.widget.TextView
 import com.example.subscriptioncontrol.R
 
-class SubscriptionAdapter(private val context: Context, private val subscriptions: MutableList<Subscription>) : BaseAdapter() {
+class SubscriptionAdapter(
+    private val context: Context,
+    private var subscriptions: MutableList<Subscription>,
+    private val subscriptionViewModel: SubscriptionViewModel
+) : BaseAdapter() {
 
     override fun getCount(): Int {
         return subscriptions.size
@@ -21,6 +25,12 @@ class SubscriptionAdapter(private val context: Context, private val subscription
 
     override fun getItemId(position: Int): Long {
         return position.toLong()
+    }
+
+
+    fun updateList(newList: MutableList<Subscription>) {
+        subscriptions = newList
+        notifyDataSetChanged()
     }
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
@@ -72,11 +82,14 @@ class SubscriptionAdapter(private val context: Context, private val subscription
             val updatedNumber1 = editTextNumber1.text.toString().toInt()
             val updatedNumber2 = editTextNumber2.text.toString().toInt()
 
-            // Обновляем данные в списке
-            subscriptions[position] = Subscription(updatedText, updatedNumber1, updatedNumber2)
-            notifyDataSetChanged()
+            // Update data using ViewModel
+            subscriptionViewModel.subscriptions.value?.let { subscriptions ->
+                subscriptions[position] = Subscription(updatedText, updatedNumber1, updatedNumber2)
+                subscriptionViewModel.subscriptions.postValue(subscriptions)
+            }
 
             alertDialog.dismiss()
         }
     }
+
 }
